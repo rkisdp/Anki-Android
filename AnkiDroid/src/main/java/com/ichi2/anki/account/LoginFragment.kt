@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Button
@@ -120,6 +121,28 @@ class LoginFragment : Fragment(R.layout.fragment_my_account) {
                 bottom = maxOf(withKeyboard.bottom, insets.bottomCornerClearance(content)),
             )
             insets
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        warnIfThirdPartyImeActive()
+    }
+
+    private fun warnIfThirdPartyImeActive() {
+        val currentIme =
+            Settings.Secure.getString(
+                requireContext().contentResolver,
+                Settings.Secure.DEFAULT_INPUT_METHOD,
+            ) ?: return
+        val systemPackages = setOf("com.android.inputmethod.latin", "com.google.android.inputmethod.latin")
+        val activePackage = currentIme.substringBefore("/")
+        if (activePackage !in systemPackages) {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Security Warning")
+                .setMessage("A third-party keyboard is active. Sensitive data may be at risk.")
+                .setPositiveButton("Continue") { d, _ -> d.dismiss() }
+                .show()
         }
     }
 
